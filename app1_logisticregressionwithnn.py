@@ -252,9 +252,10 @@ def app():
         return d
     ```
     ## Modelling
+    Increase the iterations and reduce the learning rate for optimal results
     ''')
 
-    num_iterations = st.sidebar.slider('Iterations', 10, 2000, 200, step=10)
+    num_iterations = st.sidebar.slider('Iterations', 10, 2000, 50, step=10)
     learning_rate = st.sidebar.slider('Learning Rate', 0.001, 0.05, 0.005, step=0.001)
     # print_cost = st.selectbox('print_cost :', [True, False])
     logistic_regression_model = model(train_set_x, train_set_y, test_set_x, test_set_y, num_iterations,

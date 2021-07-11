@@ -3,3 +3,5 @@ plotly
 matplotlib
 h5py
 scipy
+seaborn
+squarify

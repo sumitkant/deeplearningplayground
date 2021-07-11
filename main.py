@@ -1,5 +1,6 @@
 import streamlit as st
 import app1_logisticregressionwithnn
+import app2_prettymatplotlib
 from libs.streamlithelper import show_logo
 
 
@@ -12,6 +13,7 @@ st.markdown("""
 
 PAGES = {
     "Logistic Regression with Neural Network Mindset": app1_logisticregressionwithnn,
+    "Pretty Matplotlib": app2_prettymatplotlib,
 }
 
 c1, c2, c3 = st.beta_columns((3, 1, 3))
