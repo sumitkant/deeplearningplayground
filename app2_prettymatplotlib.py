@@ -34,24 +34,34 @@ def app():
     st.pyplot(f)
     st.write('|'.join(colors))
 
-    chart_type = ['Bar Chart', 'Line Chart']
+    
+    chart_type = ['Bar Chart', 'Heatmap']
     chart_select = st.selectbox('Chart Type', chart_type)
 
+
+    # Hyperparameters
+    st.sidebar.subheader('General Chart Properties')
+    w = st.sidebar.slider('Width', 1, 30, 12, 1)
+    h = st.sidebar.slider('Height', 1, 30, 6, 1)
+    background_color = st.sidebar.color_picker('Background Color', colors[-1])
+    fontsize = st.sidebar.slider('Font Size', 10, 100, 20, 1)
+    fontfamily = st.sidebar.selectbox('Font Family', ['serif','sans-serif','monospace','cursive','fantasy'])
+    title_x_offset = st.sidebar.slider('Title Offset from Left', -5.0, 20.0, -1.5, 0.25)
+
+
+    # Bar charts
     if chart_select == 'Bar Chart':
         st.header('Bar Chart')
 
         st.sidebar.header('Bar Chart Properties')
-        w = st.sidebar.slider('Width', 1, 30, 12, 1)
-        h = st.sidebar.slider('Height', 1, 30, 6, 1)
-        t = st.sidebar.text_input('Title','Kagglers Coding Experience')
-        subt = st.sidebar.text_input('Subtitle','Most Kagglers have between 1-5 years of coding experience')
+
         x_lab = st.sidebar.text_input('X Label', 'Coding Experience')
         y_lab = st.sidebar.text_input('Y Label','Number of Kagglers')
-        fontsize = st.sidebar.slider('Font Size', 10, 100, 20, 1)
-        fontfamily = st.sidebar.selectbox('Font Family', ['serif','sans-serif','monospace','cursive','fantasy'])
+        t = st.sidebar.text_input('Title','Kagglers Coding Experience')
+        subt = st.sidebar.text_input('Subtitle','Most Kagglers have between 1-5 years of coding experience')
         bar_color = st.sidebar.color_picker('Bar color', colors[1])
-        background_color = st.sidebar.color_picker('Background Color', colors[-1])
-        title_x_offset = st.sidebar.slider('Title Offset from Left', -5.0, 20.0, -1.5, 0.25)
+        
+        
 
         st.sidebar.subheader('Additional for Clearner Bar chart')
         spacing = st.sidebar.slider('Annotation Spacing', 1, 100, 10)
@@ -177,5 +187,50 @@ def app():
             '''.format(w=w, h=h, bar_color=bar_color, fontsize=fontsize, fontfamily=fontfamily, c=colors[-1],
                        x_lab=x_lab, y_lab=y_lab, t=t, subt=subt, title_x_offset=title_x_offset, spacing=spacing))
 
-    if chart_select == 'Line Chart':
-        st.header('Line Chart')
+    if chart_select == 'Heatmap':
+        st.header('Heatmap')
+
+        st.sidebar.subheader('Heatmap Properties')
+        accent_color = st.sidebar.color_picker('Accent Color', colors[1])
+        t = st.sidebar.text_input('Title','Correlation Matrix')
+        subt = st.sidebar.text_input('Subtitle','Correlation between variables of car crashes dataset')
+
+        data = sns.load_dataset('car_crashes')
+        
+
+        f,ax = plt.subplots(1,1, figsize=(w,h), facecolor=background_color)
+        ax.set_facecolor(background_color)
+        ax.text(title_x_offset, -1, t, fontsize=fontsize, fontweight='bold', fontfamily=fontfamily)
+        ax.text(title_x_offset, -.5, subt, fontsize=int(np.ceil(fontsize*0.75)), fontweight='light', fontfamily=fontfamily)
+        colormap = matplotlib.colors.LinearSegmentedColormap.from_list("", [accent_color, colors[-1], accent_color])
+        sns.heatmap(data.corr(), ax=ax, annot=True, vmin=-1, vmax=1, square=True, cbar=False, cmap=colormap, fmt='.0g')
+        ax.set_xticklabels(ax.get_xticklabels(), fontfamily=fontfamily, fontsize=fontsize/2.5, rotation=90, ha='center')
+        ax.set_yticklabels(ax.get_yticklabels(), fontfamily=fontfamily, fontsize=fontsize/2.5, rotation=0, va='center')
+        st.pyplot(f)
+
+        st.markdown('''
+            ### Code
+            The code assumes that the data is in `data` object with two columns `x` and `y`
+            ```python
+    
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+
+            data = sns.load_dataset('car_crashes')
+            fig,ax = plt.subplots(1,1, figsize=({w}, {h}) # create figure
+        
+            # heatmap
+            background_color = '{background_color}'
+            f,ax = plt.subplots(1,1, figsize=(w,h), facecolor=background_color)
+            ax.set_facecolor(background_color)
+            ax.text({title_x_offset}, -1, '{t}', fontsize=fontsize, fontweight='bold', fontfamily='{fontfamily}')
+            ax.text({title_x_offset}, -.5, '{subt}', fontsize=int(np.ceil(fontsize*0.75)), fontweight='light', fontfamily='{fontfamily}')
+            colormap = matplotlib.colors.LinearSegmentedColormap.from_list("", ['{accent_color}', '{background_color}', '{accent_color}'])
+            sns.heatmap(data.corr(), ax=ax, annot=True, vmin=-1, vmax=1, square=True, cbar=False, cmap=colormap, fmt='.0g')
+            ax.set_xticklabels(ax.get_xticklabels(), fontfamily=fontfamily, fontsize=fontsize/2.5, rotation=90, ha='center')
+            ax.set_yticklabels(ax.get_yticklabels(), fontfamily=fontfamily, fontsize=fontsize/2.5, rotation=0, va='center')
+            plt.show()
+            ```
+            '''.format(w=w, h=h, accent_color=accent_color, fontsize=fontsize, fontfamily=fontfamily, c=colors[-1],
+                       t=t, subt=subt, title_x_offset=title_x_offset, background_color=background_color))
+
