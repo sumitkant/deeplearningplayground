@@ -35,7 +35,7 @@ def app():
     st.write('|'.join(colors))
 
     
-    chart_type = ['Bar Chart', 'Heatmap']
+    chart_type = ['Bar Chart', 'Heatmap', 'Distribution']
     chart_select = st.selectbox('Chart Type', chart_type)
 
 
@@ -234,3 +234,45 @@ def app():
             '''.format(w=w, h=h, accent_color=accent_color, fontsize=fontsize, fontfamily=fontfamily, c=colors[-1],
                        t=t, subt=subt, title_x_offset=title_x_offset, background_color=background_color))
 
+    if chart_select == 'Distribution':
+
+        st.header('Distribution Plots')
+        st.sidebar.subheader('Distribution Plot Properties')
+        r = st.sidebar.slider('Rows', 1, 20, 3)
+        c = st.sidebar.slider('Columns', 1, 20, 3)
+
+        data = sns.load_dataset('car_crashes')
+
+        st.write(data.head())
+
+        fig = plt.figure(figsize=(w, h), facecolor=background_color)
+        gs = fig.add_gridspec(r, c)
+        gs.update(wspace=0.2, hspace=0.05)
+
+        run_no = 0
+        for col in range(0, c):
+            for row in range(0, r):
+                locals()["ax"+str(run_no)] = fig.add_subplot(gs[row, col])
+                locals()["ax"+str(run_no)].set_facecolor(background_color)
+                locals()["ax"+str(run_no)].set_yticklabels([])
+                locals()["ax"+str(run_no)].tick_params(axis='y', which=u'both',length=0)
+                for s in ["top","right", 'left']:
+                    locals()["ax"+str(run_no)].spines[s].set_visible(False)
+                run_no += 1
+
+        locals()['ax0'].text(-0.2, 2.25, 'Continuous Features Distribution on Test Dataset', fontsize=fontsize, fontweight='bold', fontfamily=fontfamily)
+        locals()['ax0'].text(-0.2, 2, 'Continuous features on test dataset is similar to train dataset', fontsize=int(fontsize*0.6), fontweight='light', fontfamily=fontfamily)        
+
+        run_no = 0
+        for col in data.columns[:-1]:
+            this_col = (data[col] - data[col].min())/(data[col].max() - data[col].min())
+            sns.kdeplot(this_col, ax=locals()["ax"+str(run_no)], shade=True, color='#f088b7', alpha=0.9, zorder=2)
+            locals()["ax"+str(run_no)].grid(which='major', axis='x', zorder=0, color='gray', linestyle=':', dashes=(1,5))
+            locals()["ax"+str(run_no)].set_ylabel(col, fontsize=fontsize/2, fontweight='bold', ha='left', fontfamily=fontfamily).set_rotation(0)
+            locals()["ax"+str(run_no)].yaxis.set_label_coords(0, 0.9)
+            locals()["ax"+str(run_no)].set_xlim(-0.1, 1.1)
+            locals()["ax"+str(run_no)].set_xlabel('')
+            run_no += 1
+            
+    
+        st.pyplot(fig)
