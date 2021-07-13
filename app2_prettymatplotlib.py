@@ -35,7 +35,7 @@ def app():
     st.write('|'.join(colors))
 
     
-    chart_type = ['Bar Chart', 'Heatmap', 'Distribution']
+    chart_type = ['Bar Chart', 'Heatmap', 'KDE for Distribution']
     chart_select = st.selectbox('Chart Type', chart_type)
 
 
@@ -45,7 +45,7 @@ def app():
     h = st.sidebar.slider('Height', 1, 30, 6, 1)
     background_color = st.sidebar.color_picker('Background Color', colors[-1])
     fontsize = st.sidebar.slider('Font Size', 10, 100, 20, 1)
-    fontfamily = st.sidebar.selectbox('Font Family', ['serif','sans-serif','monospace','cursive','fantasy'])
+    fontfamily = st.sidebar.selectbox('Font Family', ['serif','sans-serif','monospace','cursive','fantasy'], 1)
     title_x_offset = st.sidebar.slider('Title Offset from Left', -5.0, 20.0, -1.5, 0.25)
 
 
@@ -234,45 +234,76 @@ def app():
             '''.format(w=w, h=h, accent_color=accent_color, fontsize=fontsize, fontfamily=fontfamily, c=colors[-1],
                        t=t, subt=subt, title_x_offset=title_x_offset, background_color=background_color))
 
-    if chart_select == 'Distribution':
+    if chart_select == 'KDE for Distribution':
 
-        st.header('Distribution Plots')
+        st.header('KDE for Distribution')
         st.sidebar.subheader('Distribution Plot Properties')
         r = st.sidebar.slider('Rows', 1, 20, 3)
         c = st.sidebar.slider('Columns', 1, 20, 3)
+        alpha = st.sidebar.slider('Alpha (transparency)', 0.0, 1.0, 0.9, 0.05)
+        accent_color = st.sidebar.color_picker('Accent Color', colors[1])
+        t = st.sidebar.text_input('Title','KDE plots')
+        subt = st.sidebar.text_input('Subtitle','Distribution of Variables with min max normalization')
 
         data = sns.load_dataset('car_crashes')
 
-        st.write(data.head())
+        fig, axes = plt.subplots(r,c, figsize=(w, h), facecolor=background_color, sharex=True)
+        for ax in axes.ravel():
+            ax.set_facecolor(background_color)
+            ax.set_yticklabels([])
+            ax.tick_params(axis='y', which=u'both',length=0)
 
-        fig = plt.figure(figsize=(w, h), facecolor=background_color)
-        gs = fig.add_gridspec(r, c)
-        gs.update(wspace=0.2, hspace=0.05)
+            for s in ["top","right", 'left']:
+                ax.spines[s].set_visible(False)
 
-        run_no = 0
-        for col in range(0, c):
-            for row in range(0, r):
-                locals()["ax"+str(run_no)] = fig.add_subplot(gs[row, col])
-                locals()["ax"+str(run_no)].set_facecolor(background_color)
-                locals()["ax"+str(run_no)].set_yticklabels([])
-                locals()["ax"+str(run_no)].tick_params(axis='y', which=u'both',length=0)
-                for s in ["top","right", 'left']:
-                    locals()["ax"+str(run_no)].spines[s].set_visible(False)
-                run_no += 1
+        axes.ravel()[0].text(-0.2, 2.3, t, fontsize=fontsize, fontweight='bold', fontfamily=fontfamily)
+        axes.ravel()[0].text(-0.2, 2, subt, fontsize=int(fontsize*0.6), fontweight='light', fontfamily=fontfamily)        
 
-        locals()['ax0'].text(-0.2, 2.25, 'Continuous Features Distribution on Test Dataset', fontsize=fontsize, fontweight='bold', fontfamily=fontfamily)
-        locals()['ax0'].text(-0.2, 2, 'Continuous features on test dataset is similar to train dataset', fontsize=int(fontsize*0.6), fontweight='light', fontfamily=fontfamily)        
-
-        run_no = 0
-        for col in data.columns[:-1]:
-            this_col = (data[col] - data[col].min())/(data[col].max() - data[col].min())
-            sns.kdeplot(this_col, ax=locals()["ax"+str(run_no)], shade=True, color='#f088b7', alpha=0.9, zorder=2)
-            locals()["ax"+str(run_no)].grid(which='major', axis='x', zorder=0, color='gray', linestyle=':', dashes=(1,5))
-            locals()["ax"+str(run_no)].set_ylabel(col, fontsize=fontsize/2, fontweight='bold', ha='left', fontfamily=fontfamily).set_rotation(0)
-            locals()["ax"+str(run_no)].yaxis.set_label_coords(0, 0.9)
-            locals()["ax"+str(run_no)].set_xlim(-0.1, 1.1)
-            locals()["ax"+str(run_no)].set_xlabel('')
-            run_no += 1
-            
-    
+        num_cols = data.columns[:-1]
+        for col,ax in zip(num_cols, axes.ravel()[:len(num_cols)]):
+            normalized = (data[col] - data[col].min())/(data[col].max() - data[col].min())
+            sns.kdeplot(normalized, ax=ax, shade=True, color=accent_color, alpha=alpha, zorder=2, lw=0)
+            ax.grid(which='major', axis='x', zorder=0, color='gray', linestyle=':', dashes=(1,5))
+            ax.set_ylabel(col, fontsize=fontsize/2, fontweight='bold', ha='left', fontfamily=fontfamily).set_rotation(0)
+            ax.yaxis.set_label_coords(0, 0.95)
+            ax.set_xlim(-0.2, 1.2)
+            ax.set_xlabel('')
+        
         st.pyplot(fig)
+
+        st.markdown('''
+            ### Code
+            The code uses `car_crashes` dataset to plot **KDE Plots** by normalizing continuous variables with min max normalization
+            ```python
+            
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+            data = sns.load_dataset('car_crashes')
+
+            background_color = '{background_color}'
+            fontsize = {fontsize}
+            fig, axes = plt.subplots({r},{c}, figsize=({w}, {h}), facecolor=background_color, sharex=True)
+            for ax in axes.ravel():
+                ax.set_facecolor(background_color)
+                ax.set_yticklabels([])
+                ax.tick_params(axis='y', which=u'both',length=0)
+
+                for s in ["top","right", 'left']:
+                    ax.spines[s].set_visible(False)
+
+            axes.ravel()[0].text(-0.2, 2.3, '{t}', fontsize=fontsize, fontweight='bold', fontfamily='{fontfamily}')
+            axes.ravel()[0].text(-0.2, 2, '{subt}', fontsize=int(fontsize*0.6), fontweight='light', fontfamily='{fontfamily}')        
+
+            num_cols = data.columns[:-1]
+            for col,ax in zip(num_cols, axes.ravel()[:len(num_cols)]):
+                normalized = (data[col] - data[col].min())/(data[col].max() - data[col].min())
+                sns.kdeplot(normalized, ax=ax, shade=True, color=accent_color, alpha=alpha, zorder=2, lw=0)
+                ax.grid(which='major', axis='x', zorder=0, color='gray', linestyle=':', dashes=(1,5))
+                ax.set_ylabel(col, fontsize=fontsize/2, fontweight='bold', ha='left', fontfamily='{fontfamily}').set_rotation(0)
+                ax.yaxis.set_label_coords(0, 0.95)
+                ax.set_xlim(-0.2, 1.2)
+                ax.set_xlabel('') 
+            plt.show()           
+            ```
+            '''.format(r=r,c=c, w=w, h=h, accent_color=accent_color, fontsize=fontsize, fontfamily=fontfamily,
+                       t=t, subt=subt, title_x_offset=title_x_offset, background_color=background_color))
